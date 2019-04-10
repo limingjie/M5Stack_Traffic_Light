@@ -21,7 +21,7 @@ static uint32_t lcd_colors[] = {BLACK, RED, YELLOW, GREEN};
 // Traffic light struct
 typedef struct
 {
-    int color_index;
+    int color_index; // 1 - Red, 2 - Yellow, 3 - Green
     bool blink;
     unsigned long interval; // milliseconds
 } Traffic_Light;
