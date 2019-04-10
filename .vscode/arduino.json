@@ -1,0 +1,7 @@
+{
+    "programmer": "AVRISP mkII",
+    "board": "espressif:esp32:m5stack-fire",
+    "configuration": "PSRAM=enabled,PartitionScheme=default,UploadSpeed=921600,DebugLevel=warn",
+    "sketch": "TrafficLight.ino",
+    "port": "/dev/cu.SLAB_USBtoUART"
+}
