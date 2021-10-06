@@ -22,17 +22,18 @@ static uint32_t lcd_colors[] = {BLACK, RED, YELLOW, GREEN};
 typedef struct
 {
     int color_index; // 1 - Red, 2 - Yellow, 3 - Green
+    bool turn_left;
     bool blink;
     unsigned long interval; // milliseconds
 } Traffic_Light;
 
 // Traffic light sequences
 Traffic_Light lights[] = {
-    {3, false, 99999},
-    {3, true, 10999},
-    {2, true, 10999},
-    {1, false, 30999},
-    {1, true, 10999}};
+    {3, false, false, 30999},
+    {3, true, true, 30999},
+    {2, true, true, 10999},
+    {1, false, false, 30999},
+    {1, false, true, 10999}};
 
 void draw_traffic_light(int color_index)
 {
@@ -48,6 +49,20 @@ void draw_traffic_light(int color_index)
         strip.setPixelColor(i, strip_colors[color_index]);
         strip.show();
         delay(2);
+    }
+}
+
+void draw_turn_left(int color_index)
+{
+    static int last = -1;
+
+    if (color_index != last)
+    {
+        M5.Lcd.setTextSize(15);
+        M5.Lcd.setTextColor(lcd_colors[color_index]);
+        M5.Lcd.setCursor(15, 130);
+        M5.Lcd.print("<-");
+        last = color_index;
     }
 }
 
@@ -102,27 +117,20 @@ void setup()
     M5.Lcd.print("Green");
 
     draw_traffic_light(lights[0].color_index);
+    draw_turn_left(lights[0].turn_left ? lights[0].color_index : 0);
 }
 
 void loop()
 {
     // Keep states
-    static unsigned long now = 0;
-    static unsigned long light_start = 0;
-    static unsigned long blink_start = 0;
-    static bool blink_dark = false;
+    static unsigned long now = millis();
+    static unsigned long curr_seq_start = now;
+    static unsigned long blink_start = now;
+    static bool blinking = true;
     static uint32_t sequence = 0;
-    static uint32_t size = sizeof lights / sizeof lights[0];
+    static uint32_t sequence_size = sizeof lights / sizeof lights[0];
 
-    // Time for all calculations
-    if (now == 0)
-    {
-        now = light_start = blink_start = millis();
-    }
-    else
-    {
-        now = millis();
-    }
+    now = millis();
 
     // Detect button press
     uint32_t last_sequence = sequence;
@@ -140,32 +148,34 @@ void loop()
         sequence = 0;
     }
 
-    // Change traffic light color
+    // Change traffic light color if sequence changed by buttons
     if (sequence != last_sequence)
     {
-        light_start = now;
+        curr_seq_start = now;
         draw_traffic_light(lights[sequence].color_index);
+        draw_turn_left(lights[sequence].turn_left ? lights[sequence].color_index : 0);
     }
 
     // Time for next sequence
-    if (now - light_start >= lights[sequence].interval)
+    if (now - curr_seq_start >= lights[sequence].interval)
     {
-        light_start = now;
-        blink_start = now;
-        blink_dark = false;
-        sequence = (sequence + 1) % size;
+        curr_seq_start = blink_start = now;
+        blinking = false;
+        sequence = (sequence + 1) % sequence_size;
         draw_traffic_light(lights[sequence].color_index);
+        draw_turn_left(lights[sequence].turn_left ? lights[sequence].color_index : 0);
     }
 
-    // Blink
+    // Blinking
     if (lights[sequence].blink && now - blink_start >= BLINK_INTERVAL)
     {
         blink_start = now;
-        draw_traffic_light(blink_dark ? 0 : lights[sequence].color_index);
-        blink_dark = !blink_dark;
+        draw_traffic_light(blinking ? lights[sequence].color_index : 0);
+        draw_turn_left((blinking && lights[sequence].turn_left) ? lights[sequence].color_index : 0);
+        blinking = !blinking;
     }
 
-    draw_count_down(lights[sequence].interval - (now - light_start),
+    draw_count_down(lights[sequence].interval - (now - curr_seq_start),
                     lights[sequence].color_index);
 
     delay(100);

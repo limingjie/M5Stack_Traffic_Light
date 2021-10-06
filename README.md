@@ -18,16 +18,16 @@ Find the traffic light sequence definition in `TrafficLight.ino`. Customize the 
 typedef struct
 {
     int color_index; // 1 - Red, 2 - Yellow, 3 - Green
+    bool turn_left;
     bool blink;
     unsigned long interval; // milliseconds
 } Traffic_Light;
 
 // Traffic light sequences
 Traffic_Light lights[] = {
-    {3, false, 99999},
-    {3, true, 10999},
-    {2, true, 10999},
-    {1, false, 30999},
-    {1, true, 10999}};
+    {3, false, false, 30999},
+    {3, true, true, 30999},
+    {2, true, true, 10999},
+    {1, false, false, 30999},
+    {1, false, true, 10999}};
 ```
-
